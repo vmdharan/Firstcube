@@ -503,6 +503,7 @@ function init() {
     drawBlocks(0.5, 2, 0.25, 2, 3);
 
     // Test fog.
+    //scene.fog = new THREE.Fog(0xffffff, 0.050, 100);
 }
 
 // Animate
