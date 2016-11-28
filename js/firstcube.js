@@ -26,7 +26,13 @@ var geometry, material, mesh;
 var stats, rendererStats;
 
 // Tree mesh
-var mesh2, treeMesh;
+var treeMesh;
+
+// Blocks
+var mesh2;
+
+// Player
+var playerMesh;
 
 // Physics time step.
 var physicsTimeStep = 1/120;
@@ -115,6 +121,183 @@ animate();
 // ----------- //
 // Definitions //
 // ----------- //
+
+// Draw the blocks to test physics.
+function drawBlocks(s, startX, startY, startZ, depth) {
+	var mesh2Friction = 0.25;
+    var mesh2Restitution = 0.35;
+    var mesh2Material = Physijs.createMaterial(
+    	new THREE.MeshPhongMaterial({  
+    		color: 0x00aaee, 
+    	    specular: 0x444444,
+    	    shading: THREE.SmoothShading,
+    	}),
+    	mesh2Friction,
+    	mesh2Restitution
+    );
+    var blockGeometry = new THREE.BoxGeometry( 1*s, 1*s, 1*s );
+    
+    for(var i=0; i<depth; i++) {
+    	for(var j=0; j<depth; j++) {
+    		for(var k=0; k<depth; k++) {
+    			mesh2 = new Physijs.BoxMesh(blockGeometry, mesh2Material, 0.25);
+    		    mesh2.position.set(startX+i*s, startY+j*s, startZ+k*s);
+    		    mesh2.castShadow = true;
+    		    mesh2.receiveShadow = true;
+
+    		    scene.add(mesh2);
+    		}
+    	}
+    }
+}
+
+// Draw the player.
+function drawPlayer(s, xPos, yPos, zPos) {
+	var playGeo = new THREE.SphereGeometry(0.5, 8, 6);
+	
+	var playMeshFriction = 0.25;
+    var playMeshRestitution = 0.75;
+    var playMat = Physijs.createMaterial(
+    	new THREE.MeshPhongMaterial({  
+    		color: 0x116677, 
+    	    specular: 0x222222,
+    	    shading: THREE.SmoothShading,
+    	}),
+    	playMeshFriction,
+    	playMeshRestitution
+    );
+	
+	playerMesh = new Physijs.SphereMesh(playGeo, playMat, 10);
+	playerMesh.position.set(xPos, yPos+0.5*s, zPos);
+	playerMesh.castShadow = true;
+	playerMesh.receiveShadow = true;
+	scene.add(playerMesh);
+}
+
+function createTreeRoots(s, xPos, yPos, zPos) {
+	var treeRootGeometry = new THREE.BoxGeometry(0.2*s, 0.1*s, 0.2*s);
+	var treeRoot = new THREE.MeshPhongMaterial({ color: 0x784532 });
+	
+	// Roots
+	treeMesh = new THREE.Mesh(treeRootGeometry, treeRoot);
+	treeMesh.position.set(xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeRootGeometry, treeRoot);
+	treeMesh.position.set(xPos, yPos, zPos + 0.1*s);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeRootGeometry, treeRoot);
+	treeMesh.position.set(xPos, yPos, zPos - 0.1*s);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeRootGeometry, treeRoot);
+	treeMesh.position.set(0.1*s + xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeRootGeometry, treeRoot);
+	treeMesh.position.set(-0.1*s + xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+}
+
+function createTreeTrunk(s, xPos, yPos, zPos) {
+	var treeTrunkGeometry = new THREE.BoxGeometry(0.2*s, 0.2*s, 0.2*s);
+	var treeTrunk = new THREE.MeshPhongMaterial({ color: 0x784532 });
+	
+	// Trunk
+	treeMesh = new THREE.Mesh(treeTrunkGeometry, treeTrunk);
+	treeMesh.position.set(xPos, 0.1*s + yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeTrunkGeometry, treeTrunk);
+	treeMesh.position.set(xPos, 0.3*s + yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeTrunkGeometry, treeTrunk);
+	treeMesh.position.set(xPos, 0.5*s + yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+}
+
+function createTreeLeaves1(s, xPos, yPos, zPos) {
+	var treeLeavesGeometry = new THREE.BoxGeometry(0.5*s, 0.5*s, 0.5*s);
+	var treeLeavesGeometry2 = new THREE.BoxGeometry(0.65*s, 0.35*s, 0.5*s);
+	var treeLeavesGeometry3 = new THREE.BoxGeometry(0.5*s, 0.35*s, 0.65*s);
+	var treeLeaves = new THREE.MeshPhongMaterial({ color: 0x327845 });
+	
+	// Leaves
+	treeMesh = new THREE.Mesh(treeLeavesGeometry, treeLeaves);
+	treeMesh.position.set(xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeLeavesGeometry2, treeLeaves);
+	treeMesh.position.set(xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeLeavesGeometry3, treeLeaves);
+	treeMesh.position.set(xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+}
+
+function createTreeLeaves2(s, xPos, yPos, zPos) {
+	var treeLeavesGeometry = new THREE.CylinderGeometry(0, 0.5*s, 0.75*s, 4, 1);
+	var treeLeavesGeometry2 = new THREE.CylinderGeometry(0, 0.5*s*0.75, 0.75*s*0.75, 4, 1);
+	var treeLeavesGeometry3 = new THREE.CylinderGeometry(0, 0.5*s*0.55, 0.75*s*0.55, 4, 1);
+	var treeLeaves = new THREE.MeshPhongMaterial({ color: 0x327845 });
+	
+	// Leaves
+	treeMesh = new THREE.Mesh(treeLeavesGeometry, treeLeaves);
+	treeMesh.position.set(xPos, yPos, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeLeavesGeometry2, treeLeaves);
+	treeMesh.position.set(xPos, yPos + 0.20*s, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+	
+	treeMesh = new THREE.Mesh(treeLeavesGeometry3, treeLeaves);
+	treeMesh.position.set(xPos, yPos + 0.40*s, zPos);
+	treeMesh.receiveShadow = true;
+	treeMesh.castShadow = true;
+	scene.add(treeMesh);
+}
+
+function createTree1(s, xPos, yPos, zPos) {
+	createTreeRoots(s, xPos, 0.05*s + yPos, zPos);	
+	createTreeTrunk(s, xPos, yPos, zPos);
+	createTreeLeaves1(s, xPos, 0.75*s + yPos, zPos);
+}
+
+function createTree2(s, xPos, yPos, zPos) {
+	createTreeTrunk(s, xPos, yPos, zPos);
+	createTreeLeaves2(s, xPos, 0.75*s + yPos, zPos);
+	//createTreeLeaves2(0.75*s, xPos, 0.75*s + yPos + 0.20*s, zPos);
+	//createTreeLeaves2(0.55*s, xPos, 0.75*s + yPos + 0.40*s, zPos);
+}
 
 // Initialisation
 function init() {
@@ -247,8 +430,12 @@ function init() {
     scene.add(mesh);
     scene.add(camera);
 
-    // Initialise player rotation.
+    // Initialise player.
+    drawPlayer(1, 3, 0, -4);
     playerRotation = 0;
+
+    // Draw blocks for testing physics.
+    drawBlocks(0.5, 2, 0.25, 2, 3);
 }
 
 // Animate
@@ -309,4 +496,7 @@ function update() {
 	if (keyUpdate) {
 		//render();
 	}
+	
+	playerMesh.setLinearVelocity(new THREE.Vector3(0, 0, 0));
+    playerMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
 }
