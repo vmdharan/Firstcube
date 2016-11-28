@@ -123,6 +123,9 @@ drawSoilPatch(5, 0, -2);
 drawSoilPatch(1, 0, -6);
 drawSoilPatch(5, 0, -6);
 
+// Import mesh.
+loadJSON();
+
 // Animate the scene.
 animate();
 
@@ -130,6 +133,19 @@ animate();
 // ----------- //
 // Definitions //
 // ----------- //
+
+// Import a mesh using json.
+function loadJSON() {
+	var loadMesh = new THREE.JSONLoader();
+	loadMesh.load('models/untitled.json', function (geometry) {
+		var mesh = new THREE.Mesh(geometry, material);
+		
+		mesh.position.set(2, 0, 8);
+		mesh.castShadow = true;
+		mesh.receiveShadow = true;
+		scene.add(mesh);
+	});
+}
 
 // Draw the blocks to test physics.
 function drawBlocks(s, startX, startY, startZ, depth) {
@@ -485,6 +501,8 @@ function init() {
 
     // Draw blocks for testing physics.
     drawBlocks(0.5, 2, 0.25, 2, 3);
+
+    // Test fog.
 }
 
 // Animate
