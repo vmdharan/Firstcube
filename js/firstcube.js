@@ -114,6 +114,15 @@ createTree2(1.5, -6, 0, 3);
 createTree2(2.0, -8, 0, 2);
 createTree2(2.25, -3, 0, 2);
 
+// Draw roof mesh.
+drawRoof();
+
+// Draw soil.    
+drawSoilPatch(1, 0, -2);
+drawSoilPatch(5, 0, -2);
+drawSoilPatch(1, 0, -6);
+drawSoilPatch(5, 0, -6);
+
 // Animate the scene.
 animate();
 
@@ -297,6 +306,46 @@ function createTree2(s, xPos, yPos, zPos) {
 	createTreeLeaves2(s, xPos, 0.75*s + yPos, zPos);
 	//createTreeLeaves2(0.75*s, xPos, 0.75*s + yPos + 0.20*s, zPos);
 	//createTreeLeaves2(0.55*s, xPos, 0.75*s + yPos + 0.40*s, zPos);
+}
+
+function drawRoof() {
+	var geo3 = new THREE.CylinderGeometry(0.675, 1.25, 0.4, 4, 1);
+    var roofMat = new THREE.MeshPhongMaterial({  
+    	color: 0x774422, 
+    	specular: 0x222222,
+        shading: THREE.SmoothShading,
+    	});
+    var mesh3 = new THREE.Mesh(geo3, roofMat);
+    mesh3.position.set(-3, 0.20, 8);
+    mesh3.castShadow = true;
+    mesh3.receiveShadow = true;
+    scene.add(mesh3);
+}
+
+function drawSoilPatch(xPos, yPos, zPos) {
+	drawSoil(0.96, xPos-1, yPos, zPos-1);
+	drawSoil(0.96, xPos-1, yPos, zPos);
+	drawSoil(0.96, xPos-1, yPos, zPos+1);
+	drawSoil(0.96, xPos, yPos, zPos-1);
+	drawSoil(0.96, xPos, yPos, zPos);
+	drawSoil(0.96, xPos, yPos, zPos+1);
+	drawSoil(0.96, xPos+1, yPos, zPos-1);
+	drawSoil(0.96, xPos+1, yPos, zPos);
+	drawSoil(0.96, xPos+1, yPos, zPos+1);
+}
+
+function drawSoil(s, xPos, yPos, zPos) {
+	var soilGeo = new THREE.BoxGeometry(1*s, 0.05*s, 1*s);
+	var soilMat = new THREE.MeshPhongMaterial({  
+    	color: 0x443311, 
+    	specular: 0x222222,
+        shading: THREE.SmoothShading,
+    	});
+	var soilMesh = new THREE.Mesh(soilGeo, soilMat);
+	soilMesh.position.set(xPos, yPos+0.025*s, zPos);
+	soilMesh.castShadow = true;
+	soilMesh.receiveShadow = true;
+	scene.add(soilMesh);
 }
 
 // Initialisation
