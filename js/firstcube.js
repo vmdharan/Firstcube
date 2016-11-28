@@ -1,21 +1,120 @@
 // firstcube.js
 // Simulate a basic scene using Three.js and Physijs.
 
+
+// ------- //
+// Physijs //
+// ------- //
+Physijs.scripts.worker = 'js/framework/physijs_worker.js';
+Physijs.scripts.ammo = 'ammo.js';
+
+
 // ---------------------------------- //
 // Define objects used by the program //
 // ---------------------------------- //
+
+// Scene, camera and renderer.
 var scene, camera, renderer;
-var plane, planeMaterial;
+
+// Ground plane.
+var plane;
+
+// Cube mesh.
 var geometry, material, mesh;
 
+// Statistics
 var stats, rendererStats;
+
+// Tree mesh
+var mesh2, treeMesh;
+
+// Physics time step.
+var physicsTimeStep = 1/120;
+
+// Keyboard keys.
+var Keys = {
+		up: false,
+		down: false,
+		left: false,
+		right: false,
+		jump: false
+};
+
+// Track player rotation.
+var playerRotation;
+
+// Controls.
+var controls;
+
+// Define handler for keyboard key press.
+window.onkeydown = function(e) {
+	var kc = e.keyCode;
+	e.preventDefault();
+	
+	if( kc === 65) {
+		Keys.left = true;
+	}
+	else if (kc === 87) {
+		Keys.up = true;
+	}
+	else if (kc === 68) {
+		Keys.right = true;
+	}
+	else if (kc === 83) {
+		Keys.down = true;
+	}
+	else if (kc === 32) {
+		Keys.jump = true;
+	}
+};
+
+// Define handler for keyboard key release.
+window.onkeyup = function(e) {
+	var kc = e.keyCode;
+	e.preventDefault();
+	
+	if( kc === 65) {
+		Keys.left = false;
+	}
+	else if (kc === 87) {
+		Keys.up = false;
+	}
+	else if (kc === 68) {
+		Keys.right = false;
+	}
+	else if (kc === 83) {
+		Keys.down = false;
+	}
+	else if (kc === 32) {
+		Keys.jump = false;
+	}
+};
+
+// Track if a key was pressed.
+var keyUpdate = false;
+
+
+// ------- //
+// Process //
+// ------- //
 
 // Initialise the scene.
 init();
 
+// Create trees.
+createTree1(2.5, 4, 0, 7);
+createTree2(2.5, -4, 0, 5);
+createTree2(1.5, -6, 0, 3);
+createTree2(2.0, -8, 0, 2);
+createTree2(2.25, -3, 0, 2);
+
 // Animate the scene.
 animate();
 
+
+// ----------- //
+// Definitions //
+// ----------- //
 
 // Initialisation
 function init() {
@@ -32,7 +131,10 @@ function init() {
 	document.body.appendChild( rendererStats.domElement );
 
     // Set up the scene.
-    scene = new THREE.Scene();
+    scene = new Physijs.Scene({
+    	fixedTimeStep: (physicsTimeStep) 
+    });
+    scene.setGravity(new THREE.Vector3(0, -50, 0));
 
     var sceneWidth = window.innerWidth;
     var sceneHeight = window.innerHeight;
@@ -109,14 +211,25 @@ function init() {
     scene.add(pointLight);
 
     // Add a plane to the scene.
-    planeMaterial = new THREE.MeshPhongMaterial({ color: 0x335522 });
-    plane = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), planeMaterial);
-    plane.material.side = THREE.DoubleSide;
-    plane.position.set( 0, 0, -2 );
-    plane.rotation.x = Math.PI / 2;
+    var planeMeshFriction = 0.25;
+    var planeMeshRestitution = 0.75;
+    var planeMaterial = Physijs.createMaterial(
+    	new THREE.MeshPhongMaterial({  
+    		color: 0x335522, 
+    	    specular: 0x444444,
+    	    shading: THREE.SmoothShading,
+    	}),
+    	planeMeshFriction,
+    	planeMeshRestitution
+    );
+    plane = new Physijs.BoxMesh(new THREE.BoxGeometry(150, 1, 150), planeMaterial, 0, 1);
+    plane.position.set( 0, -0.5, -2 );
     plane.receiveShadow = true;
     
     scene.add(plane);
+
+    // Define controls.
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
 
     // Add a mesh to the scene.
     geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -133,6 +246,9 @@ function init() {
 
     scene.add(mesh);
     scene.add(camera);
+
+    // Initialise player rotation.
+    playerRotation = 0;
 }
 
 // Animate
@@ -147,4 +263,50 @@ function animate() {
     stats.end();
 
     rendererStats.update(renderer);
+    controls.update();
+    
+    update();
+    
+    scene.simulate(undefined, 5);
+}
+
+function render() {
+    renderer.render(scene, camera);
+}
+
+function update() {
+	var rotFactor = 0.05;
+	if (Keys.left) {
+		keyUpdate = true;
+		playerRotation += rotFactor;
+		playerMesh.rotation.y += rotFactor;
+		playerMesh.__dirtyRotation = true;
+	}
+	if (Keys.up) {
+		keyUpdate = true;
+		playerMesh.position.x += 0.1 * Math.cos(playerRotation);
+		playerMesh.position.z -= 0.1 * Math.sin(playerRotation);
+		playerMesh.__dirtyPosition = true;
+	}
+	if (Keys.right) {
+		keyUpdate = true;
+		playerRotation -= rotFactor;
+		playerMesh.rotation.y -= rotFactor;
+		playerMesh.__dirtyRotation = true;
+	}
+	if (Keys.down) {
+		keyUpdate = true;
+		playerMesh.position.x -= 0.1 * Math.cos(playerRotation);
+		playerMesh.position.z += 0.1 * Math.sin(playerRotation);
+		playerMesh.__dirtyPosition = true;
+	}
+	if (Keys.jump) {
+		keyUpdate = true;
+		playerMesh.position.y += 0.05;
+		playerMesh.__dirtyPosition = true;
+	}
+	
+	if (keyUpdate) {
+		//render();
+	}
 }
