@@ -16,6 +16,12 @@ Physijs.scripts.ammo = 'ammo.js';
 // Scene, camera and renderer.
 var scene, camera, renderer;
 
+// UI scene and camera
+var uiScene, uiCamera;
+
+// UI Elements
+const uiElements = {};
+
 // Ground plane.
 var plane;
 
@@ -99,6 +105,11 @@ window.onkeyup = function(e) {
 // Track if a key was pressed.
 var keyUpdate = false;
 
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+
+window.addEventListener('mousemove', onMouseMove, false);
+
 
 // ------- //
 // Process //
@@ -115,7 +126,7 @@ createTree2(2.0, -8, 0, 2);
 createTree2(2.25, -3, 0, 2);
 
 // Draw roof mesh.
-drawRoof();
+//drawRoof();
 
 // Draw soil.    
 drawSoilPatch(1, 0, -2);
@@ -124,7 +135,7 @@ drawSoilPatch(1, 0, -6);
 drawSoilPatch(5, 0, -6);
 
 // Import mesh.
-loadJSON();
+//loadJSON();
 
 // Animate the scene.
 animate();
@@ -133,6 +144,11 @@ animate();
 // ----------- //
 // Definitions //
 // ----------- //
+
+function onMouseMove(event) {
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+}
 
 // Import a mesh using json.
 function loadJSON() {
@@ -153,7 +169,7 @@ function drawBlocks(s, startX, startY, startZ, depth) {
     var mesh2Restitution = 0.35;
     var mesh2Material = Physijs.createMaterial(
     	new THREE.MeshPhongMaterial({  
-    		color: 0x00aaee, 
+    		color: 0x009636, 
     	    specular: 0x444444,
     	    shading: THREE.SmoothShading,
     	}),
@@ -162,15 +178,19 @@ function drawBlocks(s, startX, startY, startZ, depth) {
     );
     var blockGeometry = new THREE.BoxGeometry( 1*s, 1*s, 1*s );
     
+	mesh2 = new Array();
     for(var i=0; i<depth; i++) {
+		mesh2[i] = new Array();
     	for(var j=0; j<depth; j++) {
+			mesh2[i][j] = new Array();
     		for(var k=0; k<depth; k++) {
-    			mesh2 = new Physijs.BoxMesh(blockGeometry, mesh2Material, 0.25);
-    		    mesh2.position.set(startX+i*s, startY+j*s, startZ+k*s);
-    		    mesh2.castShadow = true;
-    		    mesh2.receiveShadow = true;
+    			mesh2[i][j][k] = new Physijs.BoxMesh(blockGeometry, mesh2Material, 0.25);
+    		    mesh2[i][j][k].position.set(startX+i*s, startY+j*s, startZ+k*s);
+    		    mesh2[i][j][k].castShadow = true;
+    		    mesh2[i][j][k].receiveShadow = true;
+				mesh2[i][j][k].id = "i_"+i+"_j_"+j+"_k_"+k;
 
-    		    scene.add(mesh2);
+    		    scene.add(mesh2[i][j][k]);
     		}
     	}
     }
@@ -178,7 +198,7 @@ function drawBlocks(s, startX, startY, startZ, depth) {
 
 // Draw the player.
 function drawPlayer(s, xPos, yPos, zPos) {
-	var playGeo = new THREE.SphereGeometry(0.5, 8, 6);
+	var playGeo = new THREE.SphereGeometry(0.5*s, 8, 6);
 	
 	var playMeshFriction = 0.25;
     var playMeshRestitution = 0.75;
@@ -286,9 +306,9 @@ function createTreeLeaves1(s, xPos, yPos, zPos) {
 }
 
 function createTreeLeaves2(s, xPos, yPos, zPos) {
-	var treeLeavesGeometry = new THREE.CylinderGeometry(0, 0.5*s, 0.75*s, 4, 1);
-	var treeLeavesGeometry2 = new THREE.CylinderGeometry(0, 0.5*s*0.75, 0.75*s*0.75, 4, 1);
-	var treeLeavesGeometry3 = new THREE.CylinderGeometry(0, 0.5*s*0.55, 0.75*s*0.55, 4, 1);
+	var treeLeavesGeometry = new THREE.CylinderGeometry(0, 0.5*s, 0.75*s, 8, 1);
+	var treeLeavesGeometry2 = new THREE.CylinderGeometry(0, 0.5*s*0.75, 0.75*s*0.75, 8, 1);
+	var treeLeavesGeometry3 = new THREE.CylinderGeometry(0, 0.5*s*0.55, 0.75*s*0.55, 8, 1);
 	var treeLeaves = new THREE.MeshPhongMaterial({ color: 0x327845 });
 	
 	// Leaves
@@ -364,9 +384,8 @@ function drawSoil(s, xPos, yPos, zPos) {
 	scene.add(soilMesh);
 }
 
-// Initialisation
-function init() {
-    // Set up the statistics counter.
+function initStats() {
+	// Set up the statistics counter.
     // Panel value of 0 is fps, 1 is ms, 2 is mb, and 3+ for custom.
     stats = new Stats();
     stats.showPanel(0);
@@ -377,16 +396,22 @@ function init() {
 	rendererStats.domElement.style.left = '0px';
 	rendererStats.domElement.style.bottom   = '0px';
 	document.body.appendChild( rendererStats.domElement );
+}
+
+// Initialisation
+function init() {
+	
+    initStats();
 
     // Set up the scene.
     scene = new Physijs.Scene({
     	fixedTimeStep: (physicsTimeStep) 
     });
-    scene.setGravity(new THREE.Vector3(0, -50, 0));
+    scene.setGravity(new THREE.Vector3(0, -8, 0));
 
     var sceneWidth = window.innerWidth;
     var sceneHeight = window.innerHeight;
-    var viewAngle = 45;
+    var viewAngle = 50;
     var nearZ = 0.1;
     var farZ = 10000;
 
@@ -404,7 +429,7 @@ function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(sceneWidth, sceneHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMapSoft = false;
+    renderer.shadowMapSoft = true;
 
     renderer.shadowCameraNear = 0.5;
     renderer.shadowCameraFar = camera.far;
@@ -414,6 +439,9 @@ function init() {
     renderer.shadowMapDarkness = 0.75;
     renderer.shadowMapWidth = 2048;
     renderer.shadowMapHeight = 2048;
+
+	renderer.setClearColor(0x000000);
+	renderer.autoClear = false;
 
     document.body.appendChild( renderer.domElement );
 
@@ -470,7 +498,7 @@ function init() {
     	planeMeshFriction,
     	planeMeshRestitution
     );
-    plane = new Physijs.BoxMesh(new THREE.BoxGeometry(150, 1, 150), planeMaterial, 0, 1);
+    plane = new Physijs.BoxMesh(new THREE.BoxGeometry(128, 1, 128), planeMaterial, 0, 1);
     plane.position.set( 0, -0.5, -2 );
     plane.receiveShadow = true;
     
@@ -488,41 +516,120 @@ function init() {
     	});
 
     mesh = new THREE.Mesh( geometry, material );
-    mesh.position.y = 2;
+    mesh.position.y = 5;
     mesh.castShadow = true;
-    mesh.receiveShadow = false;
+    mesh.receiveShadow = true;
 
     scene.add(mesh);
     scene.add(camera);
 
     // Initialise player.
-    drawPlayer(1, 3, 0, -4);
+    drawPlayer(0.5, 3, 0, -4);
     playerRotation = 0;
 
     // Draw blocks for testing physics.
-    drawBlocks(0.5, 2, 0.25, 2, 3);
+    drawBlocks(0.25, 2, 0.125, 2, 3);
+
+	drawBlocks(0.2, -2, 0.1, -2, 3);
+
+	for(var i=0; i<8; i++) {
+		for(var j=0; j<8; j++) {
+			drawBlocks(0.2, i, 0.1, j, 2);
+		}
+	}
 
     // Test fog.
     //scene.fog = new THREE.Fog(0xffffff, 0.050, 100);
+
+	var Fizzytext = function() {
+		this.message = 'test';
+		this.speed = 100;
+		this.speed2 = 40;
+		this.displayCube = true;
+
+		//this.color0 = "#00aaee";
+		//this.color1 = "#aa00ee";
+		//this.color2 = "#aaee00";
+		//this.color3 = "#eeaaee";
+	}
+
+	var guiText = new Fizzytext();
+	var gui = new dat.GUI();
+	gui.add(guiText, 'message');
+	gui.add(guiText, 'speed', 1, 200);
+	gui.add(guiText, 'speed2', 20, 100);
+	gui.add(guiText, 'displayCube');
+
+	//gui.addColor(guiText, 'color0');
+	//gui.addColor(guiText, 'color1');
+	//gui.addColor(guiText, 'color2');
+	//gui.addColor(guiText, 'color3');
+
+	initUI(0.5 * sceneWidth, 0.5 * sceneHeight);
+	resize(sceneWidth, sceneHeight);
+}
+
+function initUI(hw, hh) {
+	uiScene = new THREE.Scene();
+	uiCamera = new THREE.OrthographicCamera(-hw, hw, hh, -hh, 1, 10);
+	uiCamera.position.set(0, 0, 10);
+
+	addUIElement({
+		id: 'top-left',
+		width: 240,
+		height: 100,
+		color: 0xff0000,
+		align: 'left',
+		valign: 'top'
+	});
+}
+
+
+
+function addUIElement({id, width, height, color, align, valign}) {
+	const uiMesh = new THREE.Mesh(
+		new THREE.PlaneGeometry(width, height),
+		new THREE.MeshBasicMaterial({color})
+	);
+	uiScene.add(uiMesh)
+	uiElements[id] = {uiMesh, width, height, align, valign};
 }
 
 // Animate
 function animate() {
-    requestAnimationFrame(animate);
+    //requestAnimationFrame(animate);
 
     stats.begin();
     mesh.rotation.x += 0.002;
     mesh.rotation.y += 0.01;
 
+	renderer.clear();
+
     renderer.render(scene, camera);
     stats.end();
+	rendererStats.update(renderer);
 
-    rendererStats.update(renderer);
+	renderer.clearDepth();
+
+	renderer.render(uiScene, uiCamera);
+	requestAnimationFrame(animate);
+
+    
     controls.update();
     
     update();
+	picking();
     
     scene.simulate(undefined, 5);
+}
+
+function picking() {
+	raycaster.setFromCamera(mouse, uiCamera);
+	var intersects = raycaster.intersectObjects(uiScene.children);
+	for(var i=0; i<intersects.length; i++) {
+		intersects[i].object.material.color.set(0x00aaff);
+	}
+	renderer.render(uiScene, uiCamera);
 }
 
 function render() {
@@ -559,6 +666,23 @@ function update() {
 		keyUpdate = true;
 		playerMesh.position.y += 0.05;
 		playerMesh.__dirtyPosition = true;
+
+		for(var i=0; i<mesh2.length; i++) {
+			for(var j=0; j<mesh2[i].length; j++) {
+				for(var k=0; k<mesh2[i][j].length; k++) {
+					var posX = mesh2[i][j][k].position.x;
+					var posY = mesh2[i][j][k].position.y;
+					var posZ = mesh2[i][j][k].position.z;
+					var blockGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+					var meshMaterial = new THREE.MeshPhongMaterial({ color: 0x00aaee });
+					//mesh2[i][j][k] = new THREE.BoxMesh(blockGeometry, meshMaterial);
+					//mesh2[i][j][k].position.set(posX, posY, posZ);
+					mesh2[i][j][k].material = meshMaterial;
+
+					scene.remove(mesh2[i][j][k]);
+				}
+			}
+		}
 	}
 	
 	if (keyUpdate) {
@@ -567,4 +691,39 @@ function update() {
 	
 	playerMesh.setLinearVelocity(new THREE.Vector3(0, 0, 0));
     playerMesh.setAngularVelocity(new THREE.Vector3(0, 0, 0));
+}
+
+function resize(w, h) {
+	camera.aspect = w / h;
+	camera.updateProjectionMatrix();
+
+	const hw = 0.5 * w;
+	const hh = 0.5 * h;
+
+	uiCamera.left = -hw;
+	uiCamera.right = hw;
+	uiCamera.top = hh;
+	uiCamera.bottom = -hh;
+	uiCamera.updateProjectionMatrix();
+
+	for (const id in uiElements) {
+		const element = uiElements[id];
+		let x = 0;
+		let y = 0;
+
+		switch (element.align) {
+			case 'left':	x = -hw + (0.5 * element.width); break;
+			case 'right':	x = hw - (0.5 * element.width); break;
+		}
+
+		switch (element.valign) {
+			case 'top':	y = hh - (0.5 * element.height); break;
+			case 'bottom':	y = -hh + (0.5 * element.height); break;
+		}
+
+		element.uiMesh.position.x = x;
+		element.uiMesh.position.y = y;
+	}
+
+	renderer.setSize(w, h);
 }
